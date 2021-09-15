@@ -11,6 +11,7 @@ function Edit(props) {
     const alert = useAlert();
     const [item, setItem] = useState("");
     const [desc, setDesc] = useState("");
+    var email = localStorage.getItem("email");
 
     var id = props.location.state;
     const [extra, setExtra] = useState({
@@ -34,7 +35,8 @@ function Edit(props) {
     }
     function getData() {
         setExtra({ ...extra, loading: true });
-        app.post('/getOne', { id }).then(succ => {
+        app.post('/getOne', { email, id }).then(succ => {
+
             setItem(succ.data.item);
             setDesc(succ.data.desc);
             setExtra({ ...extra, loading: false });
@@ -58,6 +60,7 @@ function Edit(props) {
         else {
             setExtra({ ...extra, loading: true });
             app.post('/update', {
+                email,
                 id,
                 item,
                 desc
@@ -70,7 +73,7 @@ function Edit(props) {
                         type: 'success',
                         timeout: '2000'
                     });
-                    
+
                 } else {
 
                     alert.show("Internal server down", {

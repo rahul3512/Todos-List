@@ -4,7 +4,11 @@ import { Link } from 'react-router-dom';
 
 
 function Navbar() {
-    
+    const isAuthenticated = localStorage.getItem('email');
+
+    const logout = () => {
+        localStorage.removeItem('email');
+    }
     return (
         <nav className="navbar navbar-expand-sm navbar-dark bg-dark">
             <Link className="navbar-brand">Todos</Link>
@@ -12,14 +16,18 @@ function Navbar() {
                 <li className="nav-item">
                     <Link className="nav-link text-info" to="/">Home</Link>
                 </li>
-                
+
             </ul>
-            <ul className = " navbar-nav mr-3">
+            <ul className=" navbar-nav mr-3">
                 <li className="nav-item">
-                    <Link className="nav-link text-danger" to="/login">LogIn/SignUp</Link>
+                    {isAuthenticated ?
+                        <Link className="nav-link text-danger" to="/login" onClick={logout}>Logout</Link>
+                        :
+                        <Link className="nav-link text-danger" to="/login">Login</Link>
+                    }
                 </li>
             </ul>
-        
+
         </nav>
     )
 }

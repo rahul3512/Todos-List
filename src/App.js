@@ -9,6 +9,7 @@ import Edit from './component/edit';
 import { Provider as AlertProvider } from 'react-alert'
 import AlertTemplate from 'react-alert-template-basic'
 
+
 function App() {
   return (
     <Router>
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" exact component={Home}></Route>
         <Route path="/login" component={Log}></Route>
         <Route path="/edit" component={Edit}></Route>
+
       </AlertProvider>
     </Router>
 

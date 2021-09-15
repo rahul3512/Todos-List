@@ -9,6 +9,7 @@ function Todo(props) {
   const [desc, setDesc] = useState("");
 
   const [todos, setTodos] = useState([]);
+  var userEmail = localStorage.getItem("email");
 
   const [extra, setExtra] = useState({
     loading: false,
@@ -31,49 +32,82 @@ function Todo(props) {
     );
   }
   function getData() {
-    setExtra({ ...extra, loading: true });
-    app.get("/get").then((succ) => {
-      setTodos(succ.data);
-      setExtra({ ...extra, loading: false });
-    });
+    if (userEmail === null) {
+    } else {
+      setExtra({ ...extra, loading: true });
+      app
+        .get(`/get?email=${userEmail}`)
+        .then((succ) => {
+          setTodos(succ.data);
+          setExtra({ ...extra, loading: false });
+        })
+        .catch((err) => {
+          alert.show("No internet connection ", {
+            type: "error",
+            timeout: "2000",
+          });
+          setExtra({ ...extra, loading: false });
+        });
+    }
   }
 
   function save() {
-    if (item === "") {
-      alert.show("Item name not be empty !", {
+    if (userEmail === null) {
+      alert.show("Login first", {
         type: "error",
-        timeout: "2000",
-      });
-    } else if (desc === "") {
-      alert.show("Description not be empty !", {
-        type: "error",
-        timeout: "2000",
+        timeout: "3000",
       });
     } else {
-      app
-        .post("/insert", {
-          item,
-          desc,
-        })
-        .then(function (res) {
-          if (res.data.success === "true") {
-            setItem("");
-            setDesc("");
-            getData();
-            alert.show("Inserted", {
-              type: "success",
-              timeout: "3000",
-            });
-          } else {
-            alert(`Something Wrong,, error is ${res.data.err}`);
-          }
+      if (item === "") {
+        alert.show("Item name not be empty !", {
+          type: "error",
+          timeout: "2000",
         });
+      } else if (desc === "") {
+        alert.show("Description not be empty !", {
+          type: "error",
+          timeout: "2000",
+        });
+      } else {
+        setExtra({ ...extra, loading: true });
+        app
+          .post("/insert", {
+            item,
+            desc,
+            email: userEmail,
+          })
+          .then((res) => {
+            console.log(res);
+            if (res.data.statusCode == 200) {
+              setItem("");
+              setDesc("");
+              getData();
+              alert.show("Inserted", {
+                type: "success",
+                timeout: "3000",
+              });
+            } else {
+              alert.show(`Something Wrong,, error is ${res.data.err}`, {
+                type: "error",
+                timeout: "2000",
+              });
+            }
+            setExtra({ ...extra, loading: false });
+          })
+          .catch((err) => {
+            alert.show(`${err}`, {
+              type: "error",
+              timeout: "2000",
+            });
+            setExtra({ ...extra, loading: false });
+          });
+      }
     }
   }
   function deleteItem(id) {
     setExtra({ ...extra, loading: true });
     app
-      .post("/delete", { id })
+      .post("/delete", { email: userEmail, id })
       .then((resp) => {
         if (resp.data.successCode === 200) {
           getData();
@@ -83,11 +117,15 @@ function Todo(props) {
             timeout: "3000",
           });
         } else {
-          alert(`Somthing wrong with error : ${resp.data.err}`);
+          alert(`${resp.data.err}`);
         }
       })
       .catch(() => {
         setExtra({ ...extra, loading: false });
+        alert.show("Server Down", {
+          type: "error",
+          timeout: "3000",
+        });
       });
   }
 
@@ -136,42 +174,48 @@ function Todo(props) {
 
       {/* ----------------Todos list -------------------------- */}
       <div className="row mt-5">
-        <div className="col">
-          <table className="table table-bordered table-hover">
-            <thead className="thead-dark">
-              <tr>
-                <th>Todo Name</th>
-                <th>Description</th>
-                <th>Edit</th>
-                <th>Delete</th>
-              </tr>
-            </thead>
-            <tbody className="text-light">
-              {todos.map((row) => (
-                <tr key={row._id}>
-                  <td className="font-weight-bold">{row.item}</td>
-                  <td> {row.desc}</td>
-                  <td>
-                    <Link
-                      to={{
-                        pathname: "/edit",
-                        state: row._id,
-                      }}
-                    >
-                      <i class="fas fa-pencil-alt"></i>
-                    </Link>
-                  </td>
-                  <td>
-                    <i
-                      onClick={() => deleteItem(row._id)}
-                      class="fas fa-trash-alt btn btn-danger"
-                    ></i>
-                  </td>
+        {todos.length === 0 ? (
+          <div className="text-danger center">
+            Your todos List is empty - :)
+          </div>
+        ) : (
+          <div className="col">
+            <table className="table table-bordered table-hover">
+              <thead className="thead-dark">
+                <tr>
+                  <th>Todo Name</th>
+                  <th>Description</th>
+                  <th>Edit</th>
+                  <th>Delete</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="text-light">
+                {todos.map((row) => (
+                  <tr key={row._id}>
+                    <td className="font-weight-bold">{row.item}</td>
+                    <td> {row.desc}</td>
+                    <td>
+                      <Link
+                        to={{
+                          pathname: "/edit",
+                          state: row._id,
+                        }}
+                      >
+                        <i class="fas fa-pencil-alt"></i>
+                      </Link>
+                    </td>
+                    <td>
+                      <i
+                        onClick={() => deleteItem(row._id)}
+                        class="fas fa-trash-alt btn btn-danger"
+                      ></i>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
